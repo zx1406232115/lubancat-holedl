@@ -1,0 +1,27 @@
+# ---- 编译产物（板端需要现场 `make` 生成，不入库）----
+build/
+holedl
+*.o
+*.d
+
+# ---- 运行时/测试产物 ----
+*.holedl.state
+*.holedl.state.tmp
+*.bin
+*.iso
+*.img
+
+# ---- Python ----
+__pycache__/
+*.pyc
+
+# ---- 编辑器和系统 ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---- 临时脚本 ----
+.probe*.sh
+.tmp*

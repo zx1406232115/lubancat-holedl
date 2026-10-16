@@ -1,0 +1,103 @@
+================================================================
+ Real interrupt + resume test   (on the board)
+================================================================
+
+source     : http://127.0.0.1:8799/source.bin   (server throttled to 1048576 B/s)
+block size : 1M
+sha256(src): 37b80ddf4c93a4e9a159cf06125fd5aed60026362cd705cb5dbf5c738e76412b
+
+----------------------------------------------------------------
+ step 1: start download, interrupt it after 6s
+         (the process is really killed = same as Ctrl-C)
+----------------------------------------------------------------
+── 数据源   : http://127.0.0.1:8799/source.bin
+── 总大小   : 32.00 MiB (33554432 B)
+── 输出文件 : /home/cat/resume-demo/download.bin
+── 分块大小 : 1048576 B
+── 已创建空洞文件（逻辑 32.00 MiB (33554432 B)，实际占用 0）
+── 全新下载：共 32 块
+   [  1/32] 下载块…… ok
+   [  2/32] 下载块…… ok
+   [  3/32] 下载块…… ok
+   [  4/32] 下载块…… ok
+   [  5/32] 下载块…… ok
+   [  6/32] 下载块……
+process interrupted? : yes
+
+----------------------------------------------------------------
+ step 2: state right after the interrupt
+----------------------------------------------------------------
+  logical size (ls -l) : 33554432 bytes
+  allocated (du -h)    : 5.9M
+  st_blocks            : 11904 blocks of 512B
+
+  progress state file (records which blocks finished):
+      HOLEDL1
+      http://127.0.0.1:8799/source.bin
+      33554432
+      1048576
+      f8000000
+
+  => the file is still mostly a HOLE: only fetched blocks use disk
+
+----------------------------------------------------------------
+ step 3: re-run the SAME command -> resumes only missing blocks
+----------------------------------------------------------------
+── 数据源   : http://127.0.0.1:8799/source.bin
+── 总大小   : 32.00 MiB (33554432 B)
+── 输出文件 : /home/cat/resume-demo/download.bin
+── 分块大小 : 1048576 B
+── 发现断点状态：共 32 块，已完成 5 块，待续传 27 块
+   [  6/32] 下载块…… ok
+   [  7/32] 下载块…… ok
+   [  8/32] 下载块…… ok
+   [  9/32] 下载块…… ok
+   [ 10/32] 下载块…… ok
+   [ 11/32] 下载块…… ok
+   [ 12/32] 下载块…… ok
+   [ 13/32] 下载块…… ok
+   [ 14/32] 下载块…… ok
+   [ 15/32] 下载块…… ok
+   [ 16/32] 下载块…… ok
+   [ 17/32] 下载块…… ok
+   [ 18/32] 下载块…… ok
+   [ 19/32] 下载块…… ok
+   [ 20/32] 下载块…… ok
+   [ 21/32] 下载块…… ok
+   [ 22/32] 下载块…… ok
+   [ 23/32] 下载块…… ok
+   [ 24/32] 下载块…… ok
+   [ 25/32] 下载块…… ok
+   [ 26/32] 下载块…… ok
+   [ 27/32] 下载块…… ok
+   [ 28/32] 下载块…… ok
+   [ 29/32] 下载块…… ok
+   [ 30/32] 下载块…… ok
+   [ 31/32] 下载块…… ok
+   [ 32/32] 下载块…… ok
+── 下载完成 ✔
+── status: /home/cat/resume-demo/download.bin
+   逻辑大小 (st_size)      : 32.00 MiB (33554432 B)
+   实际占用 (st_blocks*512): 32.00 MiB (33554432 B)
+   其中空洞                : 0 B
+   空洞占比                : 0.00%
+   按 4096 B 块换算      : 逻辑 8192 块 / 实占 8192 块
+   提示: du 显示的就是「实际占用」，ls -l 显示的是「逻辑大小」
+
+----------------------------------------------------------------
+ step 4: verify integrity
+----------------------------------------------------------------
+✔ 校验通过：/home/cat/resume-demo/source.bin 与 /home/cat/resume-demo/download.bin 完全一致（33554432 字节）
+  resume exit code : 0
+  verify exit code : 0
+
+  sha256(source) : 37b80ddf4c93a4e9a159cf06125fd5aed60026362cd705cb5dbf5c738e76412b
+  sha256(target) : 37b80ddf4c93a4e9a159cf06125fd5aed60026362cd705cb5dbf5c738e76412b
+
+  final file:
+    logical : 33554432 bytes
+    on disk : 32M
+
+================================================================
+ RESULT: resume exit=0  verify exit=0  (0 = success)
+================================================================

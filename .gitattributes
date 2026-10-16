@@ -1,0 +1,17 @@
+# 关键：强制 Shell / Makefile / Python 使用 LF 换行。
+# 否则在 Windows 上 clone 出来会变成 CRLF，拷到开发板上 bash 会直接报错：
+#   $'\r': command not found
+*.sh        text eol=lf
+Makefile    text eol=lf
+*.py        text eol=lf
+*.c         text eol=lf
+*.h         text eol=lf
+*.txt       text eol=lf
+*.log       text eol=lf
+*.md        text eol=lf
+
+# Windows 批处理必须是 CRLF
+*.bat       text eol=crlf
+
+# 图片按二进制处理，不做任何转换
+*.png       binary

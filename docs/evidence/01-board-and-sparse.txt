@@ -1,0 +1,75 @@
+================================================================
+ holedl - board / build / sparse-file evidence
+================================================================
+
+-- board identity --
+model      : EmbedFire LubanCat-1
+hostname   : lubancat
+kernel     : 4.19.232
+arch       : aarch64
+os         : Ubuntu 20.04.6 LTS
+gcc        : gcc (Ubuntu 9.4.0-1ubuntu1~20.04.3) 9.4.0
+
+-- executable (built natively on the board with its own gcc) --
+/home/cat/linux-homework/holedl: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=d4d981b128fb7b34356a4ab7f2a08d77ea9a7244, for GNU/Linux 3.7.0, with debug_info, not stripped
+
+-- filesystem of the working directory --
+/dev/mmcblk1p3   30G  7.9G   21G  29% /
+fs type    : ext2/ext3
+
+================================================================
+ (1) create : logical 128MiB sparse file
+================================================================
+✔ 已创建空洞文件 demo.bin（逻辑大小 128.00 MiB (134217728 B)）
+  逻辑大小 : 128.00 MiB (134217728 B)
+  实际占用 : 0 B
+  空洞占比 : 100.00%
+
+cross-check with system tools:
+  ls -l   logical size : 134217728 bytes
+  du -h   disk usage   : 0
+  st_blocks            : 0 blocks of 512B
+  => logical 128MiB, but ZERO blocks on disk (all hole)
+
+reading the hole returns all zeros:
+  first byte @ 0       :  00
+
+================================================================
+ (2) write : 4KiB at offset 4MiB, then 4KiB at offset 96MiB
+================================================================
+── 写入前: 逻辑 134217728 B / 实占 0 B / 空洞 100.00%
+✔ 已在偏移 4194304 写入 4096 字节（固定字节填充）
+── 写入后: 逻辑 134217728 B / 实占 4096 B / 空洞 99.997%
+   实占增量: 4096 B（写 1 字节也要占一个文件系统块，故通常大于写入量）
+   逻辑大小未变: 是（空洞没有被「撑开」）
+
+── 写入前: 逻辑 134217728 B / 实占 4096 B / 空洞 99.997%
+✔ 已在偏移 100663296 写入 4096 字节（固定字节填充）
+── 写入后: 逻辑 134217728 B / 实占 8192 B / 空洞 99.994%
+   实占增量: 4096 B（写 1 字节也要占一个文件系统块，故通常大于写入量）
+   逻辑大小未变: 是（空洞没有被「撑开」）
+
+system tools after the two 4KiB writes:
+  ls -l   logical size : 134217728 bytes   (unchanged)
+  du -h   disk usage   : 8.0K   <= only 8KiB was written
+
+read back to prove every untouched region is still a hole:
+  first byte @ 0       :  00
+  first byte @ 4MiB    :  aa
+  first byte @ 96MiB   :  bb
+  first byte @ 64MiB   :  00
+
+================================================================
+ (3) status : logical size / allocated blocks / hole ratio
+================================================================
+── status: demo.bin
+   逻辑大小 (st_size)      : 128.00 MiB (134217728 B)
+   实际占用 (st_blocks*512): 8.00 KiB (8192 B)
+   其中空洞                : 127.99 MiB (134209536 B)
+   空洞占比                : 99.994%
+   按 4096 B 块换算      : 逻辑 32768 块 / 实占 2 块
+   提示: du 显示的就是「实际占用」，ls -l 显示的是「逻辑大小」
+── 占用图: demo.bin  (一格 = 1048576 B, 共 128 格)
+   '#' = 已分配数据块   '.' = 空洞
+   [....#...........................................................
+    ................................#...............................]
